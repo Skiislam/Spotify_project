@@ -36,7 +36,7 @@ def home():
     if not spOauth.validate_token(cache_handler.get_cached_token()):
         auth_url = spOauth.get_authorize_url()
         return redirect(auth_url)
-    return redirect(url_for('get_user_top_songs'))
+    return redirect(url_for('get_top_songs'))
 
 @app.route('/callback')
 def callback():
@@ -47,7 +47,29 @@ def get_top_songs():
     if not spOauth.validate_token(cache_handler.get_cached_token()):
         auth_url = spOauth.get_authorize_url()
         return redirect(auth_url)
-    top_track = sp.current_user_top_tracks(limit = 10, offset = 0, time_range = 'medium_term')
-    top_info = []
+    top_track = sp.current_user_top_tracks(limit = 10, offset = 0, time_range = 'long_term')
+    top_info = [(track['name'], track['artists'][0]['name'],track['duration_ms']) for track in top_track['items']]
+    session['top_info'] = top_info
+    return redirect(url_for('display_top_tracks'))
+
+def msToMinutes(ms):
+    minutes = ms // 60000
+    seconds = (ms % 60000) // 1000
+    return f"{minutes}:{seconds:02d}"
+def update_top(top_info):
+    top_info = session['top_info']
+    return [(name, artist, msToMinutes(duration_ms)) for name, artist, duration_ms in top_info]
+
+@app.route('/display_top_tracks')
+def display_top_tracks():
+    top_info = session['top_info']
+    updated = update_top(top_info)
+    print(updated)
+    return "testing purposes: display nothing"
+
+
+    
+
+
 
 app.run(debug=True)
